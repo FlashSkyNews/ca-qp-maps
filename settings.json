@@ -1,1 +1,21 @@
-{"version":"5.13","useCookies":true,"defaultToFlatView":false,"resolutionDefault":1.0,"minZoomDistance":5,"maxZoomDistance":100000,"hiresSliderMax":1000,"hiresSliderDefault":1000,"hiresSliderMin":0,"lowresSliderMax":7000,"lowresSliderDefault":1001,"lowresSliderMin":1001,"mapDataRoot":"maps","liveDataRoot":"maps","maps":["world"],"scripts":[],"styles":[]}
+{
+    "version": "5.13",
+    "useCookies": true,
+    "defaultToFlatView": false,
+    "resolutionDefault": 0.7,
+    "minZoomDistance": 5,
+    "maxZoomDistance": 18000,
+    "hiresSliderMax": 1000,
+    "hiresSliderDefault": 500,
+    "hiresSliderMin": 500,
+    "lowresSliderMax": 7000,
+    "lowresSliderDefault": 450,
+    "lowresSliderMin": 250,
+    "mapDataRoot": "maps",
+    "liveDataRoot": "maps",
+    "maps": [
+        "world"
+    ],
+    "scripts": [],
+    "styles": []
+}
