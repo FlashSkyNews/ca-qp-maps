@@ -24,19 +24,48 @@ export default {
 					if (response.headers.has('Content-Type')) {
 						newResponse.headers.set('Content-Type', response.headers.get('Content-Type'));
 					}
+					// Ensure cache headers are set
+					if (!newResponse.headers.has('Cache-Control')) {
+						newResponse.headers.set('Cache-Control', 'public, max-age=86400');
+					}
 					return newResponse;
 				}
 			}
 			
-			// If still 404, return 204 (No Content) instead of 404
-			// Cache the response to prevent client from spamming requests for missing tiles
+			// If still 404, return 200 OK with empty body instead of 404
+			// This prevents BlueMap from treating it as an error and retrying
+			// Use appropriate content-type based on file extension
 			if (response.status === 404) {
-				return new Response(null, { 
-					status: 204,
+				let contentType = 'application/octet-stream';
+				if (path.endsWith('.png') || path.match(/\/tiles\/[^/]+\//)) {
+					contentType = 'image/png'; // Low-res tiles are PNG
+				} else if (path.endsWith('.prbm')) {
+					contentType = 'application/octet-stream'; // High-res tiles are PRBM
+				}
+				
+				return new Response(new Uint8Array(0), { 
+					status: 200,
 					headers: {
-						'Cache-Control': 'public, max-age=86400, immutable'
+						'Content-Type': contentType,
+						'Content-Length': '0',
+						'Cache-Control': 'public, max-age=31536000, immutable',
+						'X-Content-Type-Options': 'nosniff'
 					}
 				});
+			}
+			
+			// Add cache headers to successful tile responses
+			if (response.status === 200) {
+				const newResponse = new Response(response.body, response);
+				// Copy existing headers
+				response.headers.forEach((value, key) => {
+					newResponse.headers.set(key, value);
+				});
+				// Ensure cache headers are set
+				if (!newResponse.headers.has('Cache-Control')) {
+					newResponse.headers.set('Cache-Control', 'public, max-age=86400');
+				}
+				return newResponse;
 			}
 			
 			return response;
