@@ -18,6 +18,43 @@
         <link rel="icon" href="./assets/favicon-DEN7TZ5X.png">
         <link rel="manifest" href="./assets/manifest-vz4Wm4Dd.webmanifest">
         <title>BlueMap</title>
+      <script>
+        // Override fetch to handle missing tiles and disable live polling for static maps
+        (function() {
+          const originalFetch = window.fetch;
+          window.fetch = function(...args) {
+            const url = args[0];
+            const options = args[1] || {};
+            
+            // Disable live data polling - use cache only
+            if (typeof url === 'string' && (url.includes('/live/players.json') || url.includes('/live/markers.json'))) {
+              options.cache = 'force-cache';
+            }
+            
+            return originalFetch.apply(this, arguments).then(response => {
+              // Convert 404 tile responses to empty 200
+              if (response.status === 404 && typeof url === 'string' && url.includes('/tiles/')) {
+                const contentType = url.endsWith('.png') ? 'image/png' : 'application/octet-stream';
+                return new Response(new Uint8Array(0), {
+                  status: 200,
+                  headers: { 'Content-Type': contentType }
+                });
+              }
+              return response;
+            }).catch(err => {
+              // On error for tiles, return empty response
+              if (typeof url === 'string' && url.includes('/tiles/')) {
+                const contentType = url.endsWith('.png') ? 'image/png' : 'application/octet-stream';
+                return new Response(new Uint8Array(0), {
+                  status: 200,
+                  headers: { 'Content-Type': contentType }
+                });
+              }
+              throw err;
+            });
+          };
+        })();
+      </script>
       <script type="module" crossorigin src="./assets/index-ZbCQNBFs.js"></script>
       <link rel="stylesheet" crossorigin href="./assets/index-BgiqB2rB.css">
     </head>

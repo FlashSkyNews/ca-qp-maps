@@ -88,15 +88,59 @@ export default {
 				} else if (path.endsWith('.prbm')) {
 					newResponse.headers.set('Content-Type', 'application/octet-stream');
 				}
+				// Cache static files aggressively
+				if (!newResponse.headers.has('Cache-Control')) {
+					newResponse.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+				}
 				return newResponse;
 			}
 			
 			// If .gz doesn't exist, try the original file
-			return env.ASSETS.fetch(request);
+			const response = await env.ASSETS.fetch(request);
+			if (response.status === 200 && !response.headers.has('Cache-Control')) {
+				const newResponse = new Response(response.body, response);
+				response.headers.forEach((value, key) => {
+					newResponse.headers.set(key, value);
+				});
+				newResponse.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+				return newResponse;
+			}
+			return response;
 		}
 
-		// For all other requests, serve normally
-		return env.ASSETS.fetch(request);
+		// Handle live data files (players.json, markers.json) - cache aggressively for static maps
+		// BlueMap polls these every second, but for static maps they never change
+		if (path.match(/\/maps\/[^/]+\/live\/(players|markers)\.json$/)) {
+			const response = await env.ASSETS.fetch(request);
+			if (response.status === 200) {
+				const newResponse = new Response(response.body, response);
+				// Copy existing headers
+				response.headers.forEach((value, key) => {
+					newResponse.headers.set(key, value);
+				});
+				// Cache for 1 year - static map, data never changes
+				newResponse.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+				newResponse.headers.set('Content-Type', 'application/json');
+				return newResponse;
+			}
+			return response;
+		}
+
+		// For all other requests, add aggressive caching for static assets
+		const response = await env.ASSETS.fetch(request);
+		if (response.status === 200) {
+			// Only add cache headers if not already present and it's a static asset
+			if (!response.headers.has('Cache-Control')) {
+				const newResponse = new Response(response.body, response);
+				response.headers.forEach((value, key) => {
+					newResponse.headers.set(key, value);
+				});
+				// Cache static assets for 1 year
+				newResponse.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+				return newResponse;
+			}
+		}
+		return response;
 	}
 };
 
