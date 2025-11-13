@@ -29,8 +29,14 @@ export default {
 			}
 			
 			// If still 404, return 204 (No Content) instead of 404
+			// Cache the response to prevent client from spamming requests for missing tiles
 			if (response.status === 404) {
-				return new Response(null, { status: 204 });
+				return new Response(null, { 
+					status: 204,
+					headers: {
+						'Cache-Control': 'public, max-age=86400, immutable'
+					}
+				});
 			}
 			
 			return response;
