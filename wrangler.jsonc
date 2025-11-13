@@ -1,8 +1,10 @@
 {
 	"name": "ca-maps",
 	"compatibility_date": "2025-01-27",
+	"main": "./worker.js",
 	"assets": {
-		"directory": "."
+		"directory": ".",
+		"binding": "ASSETS"
 	},
 	"observability": {
 		"enabled": false,
